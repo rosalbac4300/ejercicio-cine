@@ -1,0 +1,30 @@
+services:
+  backend:
+    build: ./salaCine
+    container_name: salaCine
+    ports:
+      - '4000:4000'
+    environment:
+        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    env_file:
+      - .env
+    depends_on:
+      - db
+    volumes:
+      - ./salaCine:/app
+
+  db:
+    image: mysql:latest
+    container_name: db-mysql
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    environment:
+        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+        MYSQL_DATABASE: calendario-cine
+    env_file:
+      - .env
+
+volumes:
+  mysql-data:
