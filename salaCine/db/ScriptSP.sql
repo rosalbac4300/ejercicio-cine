@@ -105,7 +105,10 @@ SALIR: BEGIN
             AND R.FechaBaja IS NULL
 		LIMIT 1;
 
-        IF pIdReserva IS NOT NULL THEN
+        IF EXISTS (
+			SELECT R.IdReserva FROM Reserva AS R JOIN Funcion AS F ON R.IdFuncion = F.IdFuncion 
+            WHERE F.IdFuncion = pIdFuncion AND R.FechaBaja IS NULL AND R.IdButaca = pIdButaca
+		) THEN
 			SELECT 'La butaca ya fue reservada' Mensaje;
             ROLLBACK;
             LEAVE SALIR;
