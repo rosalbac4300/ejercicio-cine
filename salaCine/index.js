@@ -3,7 +3,7 @@ import { body, param } from 'express-validator';
 import cors from 'cors';
 import express, { json } from 'express';
 
-import { connectarseConReintento, correrScriptInicial, correrScriptSP } from './database.js';
+import { connectarseConReintento } from './database.js';
 import errorMiddleware from './error-middleware.js';
 import {
 	obtenerButacasDisponibles,
@@ -16,8 +16,6 @@ import { validateRequest } from './validate-request.js';
 console.log('Starting salaCine service... ');
 
 const conexionDB = await connectarseConReintento();
-await correrScriptInicial(conexionDB);
-// await correrScriptSP(conexionDB);
 
 const port = 4000;
 

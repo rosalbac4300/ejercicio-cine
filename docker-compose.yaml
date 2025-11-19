@@ -20,6 +20,8 @@ services:
       - '3306:3306'
     volumes:
       - mysql-data:/var/lib/mysql
+      - ./salaCine/db/ScriptCreateDB.sql:/docker-entrypoint-initdb.d/1.sql
+      - ./salaCine/db/ScriptSP.sql:/docker-entrypoint-initdb.d/2.sql
     environment:
         MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
         MYSQL_DATABASE: calendario-cine
