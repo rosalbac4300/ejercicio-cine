@@ -40,7 +40,7 @@ app.get(
 	async (req, res, next) => {
 		const resultado = await obtenerDetallePelicula(conexionDB, req.params['idPelicula']);
 
-		return res.status(resultado.status).json(resultado.data);
+		return res.status(resultado.status).json({data: resultado.data});
 	}
 );
 
@@ -54,7 +54,7 @@ app.get(
 		async (req, res, next) => {
 			const resultado = await obtenerPeliculas(conexionDB, req.params['fecha']);
 
-			return res.status(resultado.status).json(resultado.data);
+			return res.status(resultado.status).json({data: resultado.data});
 		}
 	)
 );
@@ -69,18 +69,18 @@ app.post(
 	],
 	asyncHandler(async (req, res, next) => {
 		const resultado = await reservarButaca(conexionDB, req.body['idFuncion'], req.body['idButaca'], req.body['dni']);
-		return res.status(resultado.status).json(resultado.data);
+		return res.status(resultado.status).json({data: resultado.data});
 	})
 );
 
 app.get(
 	'/funciones/:idFuncion/butacas-disponibles',
 	[
-		param('idPelicula').isNumeric().withMessage('El Id es numérico'),
+		param('idFuncion').isNumeric().withMessage('El Id es numérico'),
 		validateRequest,
 		async (req, res, next) => {
 			const resultado = await obtenerButacasDisponibles(conexionDB, req.params['idFuncion']);
-			return res.status(resultado.status).json(resultado.data);
+			return res.status(resultado.status).json({data: resultado.data});
 		}
 	],
 )

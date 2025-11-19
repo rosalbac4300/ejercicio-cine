@@ -18,7 +18,7 @@ export async function obtenerDetallePelicula(conexion, idPelicula) {
 
 	return {
 		status: 200,
-		data: resultados[0]
+		data: resultados[0][0]
 	}
 }
 
@@ -41,8 +41,14 @@ export async function reservarButaca(conexion, idFuncion, idButaca, dni) {
 }
 
 export async function obtenerButacasDisponibles(conexion, idFuncion) {
+	const [resultados] = await conexion.execute("CALL SP_Obtener_Butacas_Disponibles(?)", [idFuncion]);
+
+	if (resultados[0][0]["Mensaje"]) {
+		throw new NotFound(resultados[0][0]["Mensaje"]);
+	}
+
 	return {
 		status: 200,
-		data: {}
+		data: resultados[0]
 	}
 }
