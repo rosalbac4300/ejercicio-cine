@@ -6,13 +6,13 @@ DELIMITER $$
 CREATE PROCEDURE `SP_Listar_Peliculas`(pFecha DATETIME)
 SALIR: BEGIN
     SELECT
-		F.`IdFuncion` AS `Id Funcion`,
-        P.`IdPelicula` AS `Id Pelicula`,
-        S.`IdSala` AS `Id Sala`,
+		F.`IdFuncion`,
+        P.`IdPelicula`,
+        S.`IdSala`,
         P.`Pelicula`,
         S.`Sala`,
-        COALESCE(F.`FechaInicio`, F.`FechaProbableInicio`) AS `Hora de Inicio`,
-        COALESCE(F.`FechaFin`, F.`FechaProbableFin`) AS `Hora de Fin`,
+        COALESCE(F.`FechaInicio`, F.`FechaProbableInicio`) AS `HoraInicio`,
+        COALESCE(F.`FechaFin`, F.`FechaProbableFin`) AS `HoraFin`,
         F.`Precio`
     FROM
 		`Funcion` AS F
@@ -31,14 +31,14 @@ DELIMITER $$
 CREATE PROCEDURE `SP_Obtener_Pelicula`(pIdPelicula INT)
 SALIR: BEGIN
 	SELECT
-		P.IdPelicula AS `Id Pelicula`,
+		P.IdPelicula,
         G.Genero,
         P.Pelicula,
         P.Sinopsis,
-        P.Duracion AS `Duracion (Min)`,
+        P.Duracion,
         P.Actores,
         P.Observaciones,
-        COUNT(F.IdFuncion) AS `Numero de funciones asociadas`,
+        COUNT(F.IdFuncion) AS `Funciones`,
         (
 			SELECT
 				MIN(F2.FechaProbableInicio)
@@ -46,7 +46,7 @@ SALIR: BEGIN
 			WHERE F2.IdPelicula = pIdPelicula
 				AND F2.FechaProbableInicio > NOW()
 				AND F2.Estado = 'A'
-        ) AS `Proxima Funcion`
+        ) AS `ProxFuncion`
     FROM
 		Pelicula AS P
         JOIN Genero AS G ON G.IdGenero = P.IdGenero
@@ -106,7 +106,7 @@ SALIR: BEGIN
 		LIMIT 1;
 
         IF EXISTS (
-			SELECT R.IdReserva FROM Reserva AS R JOIN Funcion AS F ON R.IdFuncion = F.IdFuncion 
+			SELECT R.IdReserva FROM Reserva AS R JOIN Funcion AS F ON R.IdFuncion = F.IdFuncion
             WHERE F.IdFuncion = pIdFuncion AND R.FechaBaja IS NULL AND R.IdButaca = pIdButaca
 		) THEN
 			SELECT 'La butaca ya fue reservada' Mensaje;
@@ -129,7 +129,7 @@ CREATE PROCEDURE `SP_Obtener_Butacas_Disponibles` (pIdFuncion INT)
 SALIR: BEGIN
 	DECLARE pFechaInicio DATETIME;
     DECLARE pIdSala SMALLINT;
-    
+
 	SELECT FechaProbableInicio, IdSala
         INTO pFechaInicio, pIdSala
 	FROM Funcion
@@ -145,10 +145,10 @@ SALIR: BEGIN
 	 	SELECT 'La funcion ya inicio' Mensaje;
 	 	LEAVE SALIR;
     END IF;
-    
-    SELECT 
+
+    SELECT
 		B.IdButaca, B.NroButaca, B.Fila, B.Columna
-    FROM 
+    FROM
 		Funcion AS F
         JOIN Sala AS S ON F.IdSala = S.IdSala
         JOIN Butaca AS B ON B.IdSala = S.IdSala

@@ -1,0 +1,290 @@
+openapi: 3.0.3
+info:
+  title: Gestion Cine
+  version: 1.0.0
+  description: Gestionar Salas de Cine y Reservas
+servers:
+  - url: "http://localhost:4000"
+    description: Enpoint local para desarrollo
+
+paths:
+  /peliculas/detalle/{idPelicula}:
+    get:
+      tags:
+        - Peliculas
+      summary: Obtiene detalles de una pelicula
+      description: Devuelve datos sobre la pelicula, el horario de la proxima funcion, y la cantidad de funciones asociadas.
+      parameters:
+        - name: idPelicula
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de la pelicula
+
+      responses:
+        "200":
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      IdPelicula:
+                        type: integer
+                        description: Identificador unico de la pelicula
+                      Genero:
+                        type: string
+                        description: Genero al que pertenece la pelicula
+                      Pelicula:
+                        type: string
+                        description: Nombre de la pelicula
+                      Sinopsis:
+                        type: string
+                        description: Resumen de la pelicula
+                      Duracion:
+                        type: integer
+                        description: Duracion en minutos de la pelicula
+                      Actores:
+                        type: string
+                        description: Actores principales de la pelicula
+                      Observaciones:
+                        type: string
+                        description: Observaciones adicionales sobre la pelicula. Puede ser nulo.
+                      Funciones:
+                        type: integer
+                        description: Cantidad de funciones asociadas a la pelicula
+                      ProxFuncion:
+                        type: string
+                        format: date-time
+                        description: Fecha y hora de la proxima funcion programada para la pelicula. Puede ser nula.
+        "400":
+          description: Id Invalido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errores:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        mensaje:
+                          type: string
+                          example: "Id Invalido"
+                        campo:
+                          type: string
+                          example: "body.idPelicula"
+        "404":
+          description: No se encontro la pelcula
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errores:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        mensaje:
+                          type: string
+                          example: "La pelicula no existe"
+                        campo:
+                          type: string
+                          example: "all"
+
+  /peliculas/{Fecha}:
+    get:
+      tags:
+        - Peliculas
+      summary: Obtiene el listado de peliculas en cartelera segun la fecha. No lista peliculas que finalizaron.
+      description: Devuelve una lista de peliculas, con horario de inicio y fin, y el precio.
+      parameters:
+        - name: Fecha
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Respuesta Exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        IdFuncion:
+                          type: integer
+                          description: Identificador unico de la funcion
+                        IdPelicula:
+                          type: integer
+                          description: Identificador unico de la pelicula
+                        IdSala:
+                          type: integer
+                          description: GeneroIdentificador unico de la Sala
+                        Pelicula:
+                          type: string
+                          description: Nombre de la pelicula
+                        Sala:
+                          type: string
+                          description: Nombre de la sala
+                        HorarioInicio:
+                          type: string
+                          format: date-time
+                          description: Fecha y hora de inicio de la funcion
+                        HorarioFin:
+                          type: string
+                          format: date-time
+                          description: Fecha y hora de fin de la funcion
+                        Precio:
+                          type: number
+                          format: float
+                          description: Precio de la entrada para la funcion
+        "400":
+          description: Fecha invalida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errores:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        mensaje:
+                          type: string
+                          example: "La fecha es invalida"
+                        campo:
+                          type: string
+                          example: "params.fecha"
+        "422":
+          description: Unprocessable entity
+
+  /reservas:
+    post:
+      summary: Reserva una butaca para una funcion
+      tags:
+        - Reservas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idFuncion:
+                  type: integer
+                  description: Identificador unico de la funcion
+                idButaca:
+                  type: integer
+                  description: Identificador de la butaca a reservar
+                dni:
+                  type: string
+                  description: DNI del cliente que realiza la reserva. Debe tener hasta 11 caracteres numericos.
+      responses:
+        "201":
+          description: Butaca Reservada
+        "400":
+          description: Error en la reserva.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errores:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        mensaje:
+                          type: string
+                          example: "La fecha es invalida"
+                        campo:
+                          type: string
+                          example: "params.fecha"
+
+  /funciones/{idFuncion}/butacas-disponibles:
+    get:
+      summary: Devuelve las butacas disponibles para una funcion
+      tags:
+        - Funciones
+      parameters:
+        - name: idFuncion
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de la funcion
+      responses:
+        "200":
+          description: Respuesta exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        IdButaca:
+                          type: integer
+                          description: Identificador unico de la butaca
+                        NroButaca:
+                          type: integer
+                          description: Numero de la butaca
+                        Fila:
+                          type: string
+                          description: Fila de la butaca
+                        Columna:
+                          type: integer
+                          description: Columna de la butaca
+        "400":
+          description: Id Invalido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errores:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        mensaje:
+                          type: string
+                          example: "El Id es invalido"
+                        campo:
+                          type: string
+                          example: "params.idFuncion"
+        "404":
+          description: No se encontro la funcion o ya inicio
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errores:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        mensaje:
+                          type: string
+                          example: "No se encontro la funcion"
+                        campo:
+                          type: string
+                          example: "all"
