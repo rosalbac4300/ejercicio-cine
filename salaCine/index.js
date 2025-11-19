@@ -22,7 +22,6 @@ const port = 4000;
 const app = express();
 app.use(cors());
 app.use(json());
-app.use(errorMiddleware);
 
 const server = app.listen(port, () => {
 	console.log(`Listening on port ${port}`);
@@ -36,9 +35,10 @@ app.get(
 	[
 		param('idPelicula').isNumeric().withMessage('El Id es numérico'),
 		validateRequest,
+		errorMiddleware,
 	],
 	async (req, res, next) => {
-		const resultado = await obtenerPeliculas(conexionDB, req.params['fecha']);
+		const resultado = await obtenerDetallePelicula(conexionDB, req.params['idPelicula']);
 
 		return res.status(resultado.status).json(resultado.data);
 	}
@@ -52,7 +52,7 @@ app.get(
 	],
 	asyncHandler(
 		async (req, res, next) => {
-			const resultado = await obtenerDetallePelicula(conexionDB, req.params['fecha']);
+			const resultado = await obtenerPeliculas(conexionDB, req.params['fecha']);
 
 			return res.status(resultado.status).json(resultado.data);
 		}
@@ -67,10 +67,10 @@ app.post(
 		body('dni').isString().withMessage('El DNI debe ser un strng'), ,
 		validateRequest,
 	],
-	async (req, res, next) => {
+	asyncHandler(async (req, res, next) => {
 		const resultado = await reservarButaca(conexionDB, req.body['idFuncion'], req.body['idButaca'], req.body['dni']);
 		return res.status(resultado.status).json(resultado.data);
-	}
+	})
 );
 
 app.get(
@@ -78,9 +78,11 @@ app.get(
 	[
 		param('idPelicula').isNumeric().withMessage('El Id es numérico'),
 		validateRequest,
+		async (req, res, next) => {
+			const resultado = await obtenerButacasDisponibles(conexionDB, req.params['idFuncion']);
+			return res.status(resultado.status).json(resultado.data);
+		}
 	],
-	async (req, res, next) => {
-		const resultado = await obtenerButacasDisponibles(conexionDB, req.params['idFuncion']);
-		return res.status(resultado.status).json(resultado.data);
-	}
 )
+
+app.use(errorMiddleware);
