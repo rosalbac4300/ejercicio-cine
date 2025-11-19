@@ -1,32 +1,23 @@
-import express, { json } from 'express';
+import asyncHandler from "express-async-handler";
+import { body, param } from 'express-validator';
 import cors from 'cors';
-import mysql from 'mysql2/promise';
+import express, { json } from 'express';
 
+import { connectarseConReintento, correrScriptInicial, correrScriptSP } from './database.js';
 import errorMiddleware from './error-middleware.js';
+import {
+	obtenerButacasDisponibles,
+	obtenerDetallePelicula,
+	obtenerPeliculas,
+	reservarButaca,
+} from './funciones.js';
+import { validateRequest } from './validate-request.js';
 
 console.log('Starting salaCine service... ');
 
-async function connectWithRetry() {
-	while (true) {
-		try {
-			const connection = await mysql.createConnection({
-				host: 'db',
-				user: 'root',
-				password: process.env.MYSQL_ROOT_PASSWORD || '',
-				database: 'calendario-cine'
-			});
-
-			console.log('Connected to the MySQL database.');
-			return connection;
-
-		} catch (err) {
-			console.error('DB not ready yet, retrying in 3 seconds...');
-			await new Promise(res => setTimeout(res, 3000));
-		}
-	}
-}
-
-const dbConnection = await connectWithRetry();
+const conexionDB = await connectarseConReintento();
+await correrScriptInicial(conexionDB);
+// await correrScriptSP(conexionDB);
 
 const port = 4000;
 
@@ -40,3 +31,58 @@ const server = app.listen(port, () => {
 });
 
 // Agregar las rutas
+// Podria armar routers, para organizarlos mejor.
+// Ahora lo mantengo simple en un solo archivo.
+app.get(
+	'/peliculas/detalle/:idPelicula',
+	[
+		param('idPelicula').isNumeric().withMessage('El Id es numérico'),
+		validateRequest,
+	],
+	async (req, res, next) => {
+		const resultado = await obtenerPeliculas(conexionDB, req.params['fecha']);
+
+		return res.status(resultado.status).json(resultado.data);
+	}
+);
+
+app.get(
+	'/peliculas/:fecha',
+	[
+		param('fecha').isISO8601().toDate().withMessage('La fecha debe estar en formato (AAAA-MM-DD)'),
+		validateRequest,
+	],
+	asyncHandler(
+		async (req, res, next) => {
+			const resultado = await obtenerDetallePelicula(conexionDB, req.params['fecha']);
+
+			return res.status(resultado.status).json(resultado.data);
+		}
+	)
+);
+
+app.post(
+	'/reservas',
+	[
+		body('idFuncion').isNumeric().withMessage('El Id es numérico'),
+		body('idButaca').isNumeric().withMessage('El Id es numérico'), ,
+		body('dni').isString().withMessage('El DNI debe ser un strng'), ,
+		validateRequest,
+	],
+	async (req, res, next) => {
+		const resultado = await reservarButaca(conexionDB, req.body['idFuncion'], req.body['idButaca'], req.body['dni']);
+		return res.status(resultado.status).json(resultado.data);
+	}
+);
+
+app.get(
+	'/funciones/:idFuncion/butacas-disponibles',
+	[
+		param('idPelicula').isNumeric().withMessage('El Id es numérico'),
+		validateRequest,
+	],
+	async (req, res, next) => {
+		const resultado = await obtenerButacasDisponibles(conexionDB, req.params['idFuncion']);
+		return res.status(resultado.status).json(resultado.data);
+	}
+)

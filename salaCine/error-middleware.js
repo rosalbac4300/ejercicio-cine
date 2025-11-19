@@ -40,7 +40,7 @@ export class TooManyRequests extends HttpException {
 }
 
 function errorMiddleware(error, _request, response, _next) {
-	response.status(error.status ? error.status : 500).json({ error: error.message });
+	response.status(error.status ? error.status : 500).json({ errores: [error.message] });
 }
 
 export default errorMiddleware;
