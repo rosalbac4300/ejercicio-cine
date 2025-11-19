@@ -122,3 +122,39 @@ SALIR: BEGIN
 END$$
 DELIMITER ;
 
+-- SP ADICIONAL PARA LA API A MI ELECCION
+DROP PROCEDURE IF EXISTS `SP_Obtener_Butacas_Disponibles`;
+DELIMITER $$
+CREATE PROCEDURE `SP_Obtener_Butacas_Disponibles` (pIdFuncion INT)
+SALIR: BEGIN
+	DECLARE pFechaInicio DATETIME;
+    DECLARE pIdSala SMALLINT;
+    
+	SELECT FechaProbableInicio, IdSala
+        INTO pFechaInicio, pIdSala
+	FROM Funcion
+    WHERE IdFuncion = pIdFuncion AND Estado = 'A'
+    LIMIT 1;
+
+	IF pFechaInicio IS NULL THEN
+	  	SELECT 'No se encontró la función' Mensaje;
+	 	LEAVE SALIR;
+    END IF;
+
+    IF (pFechaInicio <= NOW()) THEN
+	 	SELECT 'La funcion ya inicio' Mensaje;
+	 	LEAVE SALIR;
+    END IF;
+    
+    SELECT 
+		B.IdButaca, B.NroButaca, B.Fila, B.Columna
+    FROM 
+		Funcion AS F
+        JOIN Sala AS S ON F.IdSala = S.IdSala
+        JOIN Butaca AS B ON B.IdSala = S.IdSala
+        LEFT JOIN Reserva AS R ON R.IdButaca = B.IdButaca
+	WHERE F.IdFuncion = pIdFuncion
+    GROUP BY B.IdButaca
+	HAVING COUNT(R.IdReserva) = 0;
+END $$
+DELIMITER ;
